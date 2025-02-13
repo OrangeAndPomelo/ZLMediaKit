@@ -30,7 +30,13 @@ jobs:
     - name: 编译
       run: mkdir -p linux_build && cd linux_build && cmake .. -DENABLE_WEBRTC=true -DENABLE_FFMPEG=true && make -j $(nproc)
 
+    - name: 上传编译结果
+      uses: actions/upload-artifact@v4
+      with:
+        name: MediaServer-build
+        path: |
+          linux_build/MediaServer       # 上传主程序
+          release/linux/Debug/*         # 上传调试目录内容
+
     - name: 运行MediaServer
       run: pwd && cd release/linux/Debug && sudo ./MediaServer -d &
-
-      
