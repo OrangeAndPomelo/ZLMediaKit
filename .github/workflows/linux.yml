@@ -29,13 +29,21 @@ jobs:
 
     - name: 编译
       run: mkdir -p linux_build && cd linux_build && cmake .. -DENABLE_WEBRTC=true -DENABLE_FFMPEG=true && make -j $(nproc)
-
-    - name: 上传编译结果
+      
+    - name: 设置环境变量
+      run: |
+        echo "BRANCH=$(echo ${GITHUB_REF#refs/heads/} | tr -s "/\?%*:|\"<>" "_")" >> $GITHUB_ENV  
+        echo "BRANCH2=$(echo ${GITHUB_REF#refs/heads/} )" >> $GITHUB_ENV    
+        echo "DATE=$(date +%Y-%m-%d)" >> $GITHUB_ENV
+        
+    - name: 打包二进制
+      id: upload
       uses: actions/upload-artifact@v4
       with:
-        name: MediaServer-build
-        path: |
-          release/linux/Debug/*         # 上传调试目录内容
+        name: ${{ github.workflow }}_${{ env.BRANCH }}_${{ env.DATE }}
+        path: release/*
+        if-no-files-found: error
+        retention-days: 90
 
     - name: 运行MediaServer
       run: pwd && cd release/linux/Debug && sudo ./MediaServer -d &
