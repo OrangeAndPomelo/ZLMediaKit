@@ -112,4 +112,4 @@ jobs:
         name: ${{ github.workflow }}_${{ env.BRANCH }}_${{ env.DATE }}
         path: release/*
         if-no-files-found: error
-        retention-days: 90
+        retention-days: 100
