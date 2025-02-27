@@ -1,14 +1,15 @@
 ﻿/*
- * Copyright (c) 2016 The ZLMediaKit project authors. All Rights Reserved.
+ * Copyright (c) 2016-present The ZLMediaKit project authors. All Rights Reserved.
  *
- * This file is part of ZLMediaKit(https://github.com/xia-chu/ZLMediaKit).
+ * This file is part of ZLMediaKit(https://github.com/ZLMediaKit/ZLMediaKit).
  *
- * Use of this source code is governed by MIT license that can be found in the
+ * Use of this source code is governed by MIT-like license that can be found in the
  * LICENSE file in the root of the source tree. All contributing project authors
  * may be found in the AUTHORS file in the root of the source tree.
  */
 
 #include "Rtmp.h"
+#include "Common/config.h"
 #include "Extension/Factory.h"
 
 namespace mediakit {
@@ -33,15 +34,14 @@ VideoMeta::VideoMeta(const VideoTrack::Ptr &video) {
         _metadata.set("framerate", video->getVideoFps());
     }
     if (video->getBitRate()) {
-        _metadata.set("videodatarate", video->getBitRate() / 1024);
+        _metadata.set("videodatarate", video->getBitRate() >> 10);
     }
-    _codecId = video->getCodecId();
-    _metadata.set("videocodecid", Factory::getAmfByCodecId(_codecId));
+    _metadata.set("videocodecid", Factory::getAmfByCodecId(video->getCodecId()));
 }
 
 AudioMeta::AudioMeta(const AudioTrack::Ptr &audio) {
     if (audio->getBitRate()) {
-        _metadata.set("audiodatarate", audio->getBitRate() / 1024);
+        _metadata.set("audiodatarate", audio->getBitRate() >> 10);
     }
     if (audio->getAudioSampleRate() > 0) {
         _metadata.set("audiosamplerate", audio->getAudioSampleRate());
@@ -52,11 +52,11 @@ AudioMeta::AudioMeta(const AudioTrack::Ptr &audio) {
     if (audio->getAudioChannel() > 0) {
         _metadata.set("stereo", audio->getAudioChannel() > 1);
     }
-    _codecId = audio->getCodecId();
-    _metadata.set("audiocodecid", Factory::getAmfByCodecId(_codecId));
+    _metadata.set("audiocodecid", Factory::getAmfByCodecId(audio->getCodecId()));
 }
 
 uint8_t getAudioRtmpFlags(const Track::Ptr &track) {
+    track->update();
     switch (track->getTrackType()) {
         case TrackAudio: {
             auto audioTrack = std::dynamic_pointer_cast<AudioTrack>(track);
@@ -68,27 +68,23 @@ uint8_t getAudioRtmpFlags(const Track::Ptr &track) {
             auto iChannel = audioTrack->getAudioChannel();
             auto iSampleBit = audioTrack->getAudioSampleBit();
 
-            uint8_t flvAudioType;
+            auto amf = Factory::getAmfByCodecId(track->getCodecId());
+            if (!amf) {
+                WarnL << "该编码格式不支持转换为RTMP: " << track->getCodecName();
+                return 0;
+            }
+            uint8_t flvAudioType = amf.as_integer();
             switch (track->getCodecId()) {
-                case CodecG711A: flvAudioType = (uint8_t)RtmpAudioCodec::g711a; break;
-                case CodecG711U: flvAudioType = (uint8_t)RtmpAudioCodec::g711u; break;
+                case CodecAAC:
                 case CodecOpus: {
-                    flvAudioType = (uint8_t)RtmpAudioCodec::opus;
-                    // opus不通过flags获取音频相关信息
+                    // opus/aac不通过flags获取音频相关信息  [AUTO-TRANSLATED:0ddf328b]
+                    // opus/aac does not get audio information through flags
                     iSampleRate = 44100;
                     iSampleBit = 16;
                     iChannel = 2;
                     break;
                 }
-                case CodecAAC: {
-                    flvAudioType = (uint8_t)RtmpAudioCodec::aac;
-                    // aac不通过flags获取音频相关信息
-                    iSampleRate = 44100;
-                    iSampleBit = 16;
-                    iChannel = 2;
-                    break;
-                }
-                default: WarnL << "该编码格式不支持转换为RTMP: " << track->getCodecName(); return 0;
+                default: break;
             }
 
             uint8_t flvSampleRate;
@@ -115,6 +111,7 @@ uint8_t getAudioRtmpFlags(const Track::Ptr &track) {
 
 void Metadata::addTrack(AMFValue &metadata, const Track::Ptr &track) {
     Metadata::Ptr new_metadata;
+    track->update();
     switch (track->getTrackType()) {
         case TrackVideo: {
             new_metadata = std::make_shared<VideoMeta>(std::dynamic_pointer_cast<VideoTrack>(track));
@@ -257,36 +254,6 @@ void RtmpHandshake::random_generate(char *bytes, int size) {
     }
 }
 
-#pragma pack(push, 1)
-
-struct RtmpVideoHeaderEnhanced {
-#if __BYTE_ORDER == __BIG_ENDIAN
-    uint8_t enhanced : 1;
-    uint8_t frame_type : 3;
-    uint8_t pkt_type : 4;
-    uint32_t fourcc;
-#else
-    uint8_t pkt_type : 4;
-    uint8_t frame_type : 3;
-    uint8_t enhanced : 1;
-    uint32_t fourcc;
-#endif
-};
-
-struct RtmpVideoHeaderClassic {
-#if __BYTE_ORDER == __BIG_ENDIAN
-    uint8_t frame_type : 4;
-    uint8_t codec_id : 4;
-    uint8_t h264_pkt_type;
-#else
-    uint8_t codec_id : 4;
-    uint8_t frame_type : 4;
-    uint8_t h264_pkt_type;
-#endif
-};
-
-#pragma pack(pop)
-
 CodecId parseVideoRtmpPacket(const uint8_t *data, size_t size, RtmpPacketInfo *info) {
     RtmpPacketInfo save;
     info = info ? info : &save;
@@ -296,7 +263,7 @@ CodecId parseVideoRtmpPacket(const uint8_t *data, size_t size, RtmpPacketInfo *i
     RtmpVideoHeaderEnhanced *enhanced_header = (RtmpVideoHeaderEnhanced *)data;
     if (enhanced_header->enhanced) {
         // IsExHeader == 1
-        CHECK(size >= 5, "Invalid rtmp buffer size: ", size);
+        CHECK(size > RtmpPacketInfo::kEnhancedRtmpHeaderSize, "Invalid rtmp buffer size: ", size);
         info->is_enhanced = true;
         info->video.frame_type = (RtmpFrameType)(enhanced_header->frame_type);
         info->video.pkt_type = (RtmpPacketType)(enhanced_header->pkt_type);

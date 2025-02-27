@@ -1,9 +1,9 @@
 ﻿/*
- * Copyright (c) 2016 The ZLMediaKit project authors. All Rights Reserved.
+ * Copyright (c) 2016-present The ZLMediaKit project authors. All Rights Reserved.
  *
  * This file is part of ZLMediaKit(https://github.com/ZLMediaKit/ZLMediaKit).
  *
- * Use of this source code is governed by MIT license that can be found in the
+ * Use of this source code is governed by MIT-like license that can be found in the
  * LICENSE file in the root of the source tree. All contributing project authors
  * may be found in the AUTHORS file in the root of the source tree.
  */
@@ -17,17 +17,21 @@ namespace mediakit {
 
 const char *FlvSplitter::onSearchPacketTail(const char *data, size_t len) {
     if (!_flv_started) {
-        //还没获取到flv头
+        // 还没获取到flv头  [AUTO-TRANSLATED:d1c8deaa]
+        // Not yet got the flv header
         if (len < sizeof(FLVHeader)) {
-            //数据不够
+            // 数据不够  [AUTO-TRANSLATED:72802244]
+            // Insufficient data
             return nullptr;
         }
         return data + sizeof(FLVHeader);
     }
 
-    //获取到flv头，处理tag数据
+    // 获取到flv头，处理tag数据  [AUTO-TRANSLATED:a15a91da]
+    // Got the flv header, processing tag data
     if (len < sizeof(RtmpTagHeader)) {
-        //数据不够
+        // 数据不够  [AUTO-TRANSLATED:72802244]
+        // Insufficient data
         return nullptr;
     }
     return data + sizeof(RtmpTagHeader);
@@ -35,7 +39,8 @@ const char *FlvSplitter::onSearchPacketTail(const char *data, size_t len) {
 
 ssize_t FlvSplitter::onRecvHeader(const char *data, size_t len) {
     if (!_flv_started) {
-        //获取到flv头了
+        // 获取到flv头了  [AUTO-TRANSLATED:1da417c0]
+        // Got the flv header
         auto header = reinterpret_cast<const FLVHeader *>(data);
         if (memcmp(header->flv, "FLV", 3)) {
             throw std::invalid_argument("不是flv容器格式！");
@@ -57,7 +62,8 @@ ssize_t FlvSplitter::onRecvHeader(const char *data, size_t len) {
         return 0;
     }
 
-    //获取到flv头，处理tag数据
+    // 获取到flv头，处理tag数据  [AUTO-TRANSLATED:a15a91da]
+    // Got the flv header, processing tag data
     auto tag = reinterpret_cast<const RtmpTagHeader *>(data);
     auto data_size = load_be24(tag->data_size);
     _type = tag->type;

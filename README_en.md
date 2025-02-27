@@ -138,7 +138,36 @@
   - Supports on-demand demultiplexing and protocol conversion, reducing CPU usage by only enabling it when someone is watching
   - Supports cluster deployment in traceable mode, with RTSP/RTMP/HLS/HTTP-TS support for traceable mode and HLS support for edge stations and multiple sources for source stations (using round-robin tracing)
   - Can reconnect to streaming after abnormal disconnection in RTSP/RTMP/WebRTC pushing within a timeout period, with no impact on the player.
- 
+
+## Closed-Source Professional Edition
+Based on the latest open-source code, the following closed-source professional editions have been added. For details, please contact: 1213642868@qq.com
+
+- Transcoding Version
+  - Supports arbitrary audio and video transcoding, including H.265/H.264/Opus/G.711/AAC/G.722/G.722.1/MP3/SVAC, etc.
+  - Configuration file-based transcoding, allowing customization of bitrate, codec type, and other parameters.
+  - Dynamic transcoding management via HTTP API, supporting settings for bitrate, resolution scaling, codec type, filters, etc.
+  - Supports adaptive hardware and software transcoding.
+  - Supports on-demand transcoding, only transcoding when a viewer is present. It also supports transparent transcoding mode, requiring no modifications to business logic.
+  - Supports automatic frame rate reduction under high load conditions to prevent video artifacts.
+  - Supports filters, including OSD text overlay and logo watermarking.
+  - Supports full GPU hardware encoding/decoding and filtering, minimizing frequent memory transfers between VRAM and RAM.
+  - Supports full GPU (CUDA) inference plugins, enabling AI-based object detection for people, vehicles, and other targets.
+
+- JT1078 Version
+  - Supports JT1078 stream ingestion and protocol conversion, with adaptive audio-video shared sequence and individual sequence modes.
+  - Adds JT1078 cascading support and JT1078 intercom support.
+  - JT1078 APIs and usage remain consistent with GB28181, ensuring compatibility.
+  - Supports H.264/H.265/G.711/AAC/MP3/G.721/G.722/G.723/G.729/G.726/ADPCM encoding.
+
+- IPTV Version
+  - Supports RTSP-TS/HLS/HTTP-TS/RTP multicast/UDP multicast stream ingestion and protocol conversion. Supports TS passthrough mode, eliminating the need for demuxing when converting to RTSP-TS/HLS/HTTP-TS/SRT.
+  - Supports RTSP-TS/SRT stream ingestion and TS passthrough mode, avoiding the need for demuxing when converting to RTSP-TS/HLS/HTTP-TS/SRT.
+  - All the above features also support demuxing TS into ES streams and converting them to RTSP/RTMP/FLV/HTTP-TS/HLS/HLS-FMP4/MP4/FMP4/WebRTC.
+  
+- VP9/AV1 Version
+  Fully supports AV1/VP9 encoding, with RTMP/RTSP/TS/PS/HLS/MP4/FMP4 protocol compatibility for AV1/VP9.
+
+
 ## System Requirements
 
 - Compiler with c++11 support, such as GCC 4.8+, Clang 3.3+, or VC2015+.
@@ -156,7 +185,7 @@ It is recommended to compile on Ubuntu or macOS. Compiling on Windows is cumbers
 
 - **You must use Git to clone the complete code. Do not download the source code by downloading the ZIP package. Otherwise, the submodule code will not be downloaded by default. You can do it like this:**
 ```
-git clone https://github.com/xia-chu/ZLMediaKit.git
+git clone https://github.com/ZLMediaKit/ZLMediaKit.git
 cd ZLMediaKit
 git submodule update --init
 ```
@@ -278,12 +307,12 @@ git submodule update --init
             return;
         }
 
-        auto viedoTrack = strongPlayer->getTrack(TrackVideo);
-        if (!viedoTrack) {
+        auto videoTrack = strongPlayer->getTrack(TrackVideo);
+        if (!videoTrack) {
             WarnL << "No video Track!";
             return;
         }
-        viedoTrack->addDelegate([](const Frame::Ptr &frame) {
+        videoTrack->addDelegate([](const Frame::Ptr &frame) {
             //please decode video here
         });
     });
@@ -323,6 +352,10 @@ git submodule update --init
 	});
 	
 	```
+
+## Binary file download
+zlmediakit uses github action to continuously integrate automatic compilation package and upload the compilation output package. Please download the latest sdk library file and executable file at [issue list] (https://github.com/ZLMediaKit/ZLMediaKit/issues/483).
+
 ## Docker Image
 
 You can download the pre-compiled image from Docker Hub and start it:
@@ -341,6 +374,7 @@ bash build_docker_images.sh
 ## Collaborative Projects
 
 - Visual management website
+   - [A backend management website for this project](https://github.com/1002victor/zlm_webassist)
    - [The latest web project with front-end and back-end separation, supporting webrtc playback](https://github.com/langmansh/AKStreamNVR)
    - [Management web site based on ZLMediaKit master branch](https://gitee.com/kkkkk5G/MediaServerUI) 
    - [Management web site based on ZLMediaKit branch](https://github.com/chenxiaolei/ZLMediaKit_NVR_UI)
@@ -355,6 +389,8 @@ bash build_docker_images.sh
   - [Hikvision ehome server implemented in Go](https://github.com/tsingeye/FreeEhome)
 
 - Client
+  - [Http Api and hook in zlm-spring-boot-starter](https://github.com/lunasaw/zlm-spring-boot-starter)
+  - [Complete java wrapper library for c sdk](https://github.com/lidaofu-hub/j_zlm_sdk)
   - [Complete C# wrapper library for c sdk](https://github.com/malegend/ZLMediaKit.Autogen) 
   - [Push client implemented based on C SDK](https://github.com/hctym1995/ZLM_ApiDemo)
   - [Http API and Hook in C#](https://github.com/chengxiaosheng/ZLMediaKit.HttpApi)
@@ -365,6 +401,8 @@ bash build_docker_images.sh
   - [WebSocket-fmp4 player based on MSE](https://github.com/v354412101/wsPlayer) 
   - [Domestic webrtc sdk(metaRTC)](https://github.com/metartc/metaRTC)
   - [GB28181 player implemented in C++](https://github.com/any12345com/BXC_gb28181Player)
+  - [Android RTCPlayer](https://github.com/leo94666/RTCPlayer)
+
 
 ## License
 
@@ -490,6 +528,55 @@ Thanks to all those who have supported this project in various ways, including b
 [tbago](https://github.com/tbago)
 [Luosh](https://github.com/Luosh)
 [linxiaoyan87](https://github.com/linxiaoyan)
+[waken](https://github.com/mc373906408)
+[Deepslient](https://github.com/Deepslient)
+[imp_rayjay](https://github.com/rayjay214)
+[ArmstrongCN](https://github.com/ArmstrongCN)
+[leibnewton](https://github.com/leibnewton)
+[1002victor](https://github.com/1002victor)
+[Grin](https://github.com/xyyangkun)
+[xbpeng121](https://github.com/xbpeng121)
+[lvchenyun](https://github.com/lvchenyun)
+[Fummowo](https://github.com/Fummowo)
+[Jovial Young ](https://github.com/JHYoung1034)
+[yujitai](https://github.com/yujitai)
+[KisChang](https://github.com/kisChang)
+[zjx94](https://github.com/zjx94)
+[LeiZhi.Mai ](https://github.com/blueskiner)
+[JiaHao](https://github.com/nashiracn)
+[chdahuzi](https://github.com/chdahuzi)
+[snysmtx](https://github.com/snysmtx)
+[SetoKaiba](https://github.com/SetoKaiba)
+[sandro-qiang](https://github.com/sandro-qiang)
+[Paul Philippov](https://github.com/themactep)
+[张传峰](https://github.com/zhang-chuanfeng)
+[lidaofu-hub](https://github.com/lidaofu-hub)
+[huangcaichun](https://github.com/huangcaichun)
+[jamesZHANG500](https://github.com/jamesZHANG500)
+[weidelong](https://github.com/wdl1697454803)
+[小强先生](https://github.com/linshangqiang)
+[李之阳](https://github.com/leo94666)
+[sgzed](https://github.com/sgzed)
+[gaoshan](https://github.com/foobra)
+[zhang2349](https://github.com/zhang2349)
+[benshi](https://github.com/BenLocal)
+[autoantwort](https://github.com/autoantwort)
+[u7ko4](https://github.com/u7ko4)
+[WengQiang](https://github.com/Tsubaki-01)
+[wEnchanters](https://github.com/wEnchanters)
+[sbkyy](https://github.com/sbkyy)
+[wuxingzhong](https://github.com/wuxingzhong)
+[286897655](https://github.com/286897655)
+[ss002012](https://github.com/ss002012)
+[a839419160](https://github.com/a839419160)
+[oldma3095](https://github.com/oldma3095)
+[Dary](https://github.com/watersounds)
+[N.z](https://github.com/neesonqk)
+[yanggs](https://github.com/callinglove)
+
+Also thank to JetBrains for their support for open source project, we developed and debugged zlmediakit with CLion:
+
+[![JetBrains](https://resources.jetbrains.com/storage/products/company/brand/logos/CLion.svg)](https://jb.gg/OpenSourceSupport)
 
 ## Use Cases
 

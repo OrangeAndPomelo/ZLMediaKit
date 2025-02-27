@@ -1,9 +1,9 @@
 ﻿/*
- * Copyright (c) 2016 The ZLMediaKit project authors. All Rights Reserved.
+ * Copyright (c) 2016-present The ZLMediaKit project authors. All Rights Reserved.
  *
- * This file is part of ZLMediaKit(https://github.com/xia-chu/ZLMediaKit).
+ * This file is part of ZLMediaKit(https://github.com/ZLMediaKit/ZLMediaKit).
  *
- * Use of this source code is governed by MIT license that can be found in the
+ * Use of this source code is governed by MIT-like license that can be found in the
  * LICENSE file in the root of the source tree. All contributing project authors
  * may be found in the AUTHORS file in the root of the source tree.
  */
@@ -46,15 +46,18 @@ void RtmpPusher::teardown() {
 void RtmpPusher::onPublishResult_l(const SockException &ex, bool handshake_done) {
     DebugL << ex.what();
     if (ex.getErrCode() == Err_shutdown) {
-        //主动shutdown的，不触发回调
+        // 主动shutdown的，不触发回调  [AUTO-TRANSLATED:bd97b1c1]
+        // Actively shutdown, no callback triggered
         return;
     }
     if (!handshake_done) {
-        //播放结果回调
+        // 播放结果回调  [AUTO-TRANSLATED:a5714269]
+        // Playback result callback
         _publish_timer.reset();
         onPublishResult(ex);
     } else {
-        //播放成功后异常断开回调
+        // 播放成功后异常断开回调  [AUTO-TRANSLATED:b5c5fa80]
+        // Callback for abnormal disconnection after successful playback
         onShutdown(ex);
     }
 
@@ -63,20 +66,27 @@ void RtmpPusher::onPublishResult_l(const SockException &ex, bool handshake_done)
     }
 }
 
-void RtmpPusher::publish(const string &url)  {
+void RtmpPusher::publish(const string &url) {
     teardown();
-    string host_url = findSubString(url.data(), "://", "/");
+    auto schema = findSubString(url.data(), nullptr, "://");
+    auto host_url = findSubString(url.data(), "://", "/");
     _app = findSubString(url.data(), (host_url + "/").data(), "/");
     _stream_id = findSubString(url.data(), (host_url + "/" + _app + "/").data(), NULL);
-    _tc_url = string("rtmp://") + host_url + "/" + _app;
-
-    if (!_app.size() || !_stream_id.size()) {
+    auto app_second = findSubString(_stream_id.data(), nullptr, "/");
+    if (!app_second.empty() && app_second.find('?') == std::string::npos) {
+        // _stream_id存在多级；不包含'?', 说明分割符'/'不是url参数的一部分  [AUTO-TRANSLATED:ef820905]
+        // _stream_id has multiple levels; does not contain '?', indicating that the delimiter '/' is not part of the URL parameters
+        _app += "/" + app_second;
+        _stream_id.erase(0, app_second.size() + 1);
+    }
+    _tc_url = schema + "://" + host_url + "/" + _app;
+    if (_app.empty() || _stream_id.empty()) {
         onPublishResult_l(SockException(Err_other, "rtmp url非法"), false);
         return;
     }
     DebugL << host_url << " " << _app << " " << _stream_id;
 
-    uint16_t port = 1935;
+    uint16_t port = start_with(url, "rtmps") ? 443 : 1935;
     splitUrl(host_url, host_url, port);
 
     weak_ptr<RtmpPusher> weakSelf = static_pointer_cast<RtmpPusher>(shared_from_this());
@@ -98,7 +108,8 @@ void RtmpPusher::publish(const string &url)  {
 }
 
 void RtmpPusher::onError(const SockException &ex){
-    //定时器_pPublishTimer为空后表明握手结束了
+    // 定时器_pPublishTimer为空后表明握手结束了  [AUTO-TRANSLATED:630ec31e]
+    // The timer _pPublishTimer is empty, indicating that the handshake is over
     onPublishResult_l(ex, !_publish_timer);
 }
 
@@ -124,7 +135,8 @@ void RtmpPusher::onRecv(const Buffer::Ptr &buf){
         onParseRtmp(buf->data(), buf->size());
     } catch (exception &e) {
         SockException ex(Err_other, e.what());
-        //定时器_pPublishTimer为空后表明握手结束了
+        // 定时器_pPublishTimer为空后表明握手结束了  [AUTO-TRANSLATED:630ec31e]
+        // The timer _pPublishTimer is empty, indicating that the handshake is over
         onPublishResult_l(ex, !_publish_timer);
     }
 }
@@ -237,14 +249,16 @@ void RtmpPusher::send_metaData(){
         }
     });
     onPublishResult_l(SockException(Err_success, "success"), false);
-    //提升发送性能
+    // 提升发送性能  [AUTO-TRANSLATED:90630751]
+    // Improve sending performance
     setSocketFlags();
 }
 
 void RtmpPusher::setSocketFlags(){
     GET_CONFIG(int, mergeWriteMS, General::kMergeWriteMS);
     if (mergeWriteMS > 0) {
-        //提高发送性能
+        // 提高发送性能  [AUTO-TRANSLATED:de96ec30]
+        // Improve sending performance
         setSendFlags(SOCKET_DEFAULE_FLAGS | FLAG_MORE);
         SockUtil::setNoDelay(getSock()->rawFD(), false);
     }
